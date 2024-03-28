@@ -27,7 +27,6 @@ output_dir = 'path/to/output/'
 input_dir = 'path/to/frames' # Where your gmt*.xyz files are stored 
 station_file_path = 'path/to/STATIONS' 
 topo_path = None # Topo file used in specfem simulation
-topo_path = None # Topo file used in specfem simulation
 filename = 'vertical_disp'
 # Specfem parameters
 dt = 0.012
@@ -43,6 +42,7 @@ fast_render = True # Will plot only 1 frame out of 10
 
 # OPTIONAL #
 # If plotting geographical data, set the paths to the shapefiles and define the UTM zone
+seismogram_path = None # Required to set absolute time in the plot
 coastline_path = None # Set to None if not available
 fault_path = None # Set to None if not available
 utmzone = None # UTM zone for the projection of shapefiles
@@ -209,7 +209,7 @@ class AnimationHandler:
             src = np.loadtxt(self.gmt_names[frame], usecols=2)
             # get the timestep from filename
             filename = os.path.basename(self.gmt_names[frame])
-            t_step = int(filename.split(sep="_")[2].split(sep=".")[0]) * NTSTEP_BETWEEN_FRAMES * dt
+            t_step = int(filename.split(sep="_")[2].split(sep=".")[0]) * NTSTEP_BETWEEN_FRAMES * dt + t0
             self.ax.set_title("time = {:.2f} s".format(t_step))
 
             if self.plot_stations:
@@ -244,6 +244,16 @@ def main():
     
     # Load and process data
     stations = StationsHelper.load_stations(station_file_path)
+    # Check for absolute time in seismogram file
+    global t0
+    if seismogram_path:
+        # Read first entry of first column of seismogram file (plain text)
+        t0 = np.loadtxt(seismogram_path)[0, 0]
+        print("t0 = ", t0)
+    else:
+        t0 = 0
+        print("t0 = ", t0)
+
     gmt_names = get_specfem_gmt_list(input_dir)
     extent = (easting_min, easting_max, northing_min, northing_max)
     
